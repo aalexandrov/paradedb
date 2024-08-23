@@ -207,6 +207,20 @@ impl SearchQueryInput {
         searcher: &Searcher,
         config: &SearchConfig,
     ) -> Result<Box<dyn Query>, Box<dyn std::error::Error>> {
+        {
+            use std::fs::File;
+            use std::io::prelude::*;
+            let mut file = File::create("/tmp/fields.txt")?;
+            for (field_type, field) in field_lookup.fields() {
+                writeln!(file, "{field_type:?}: {field:#?}")?;
+            }
+        }
+        {
+            use std::fs::File;
+            use std::io::prelude::*;
+            let mut file = File::create("/tmp/debug.txt")?;
+            writeln!(file, "{self:#?}")?;
+        }
         match self {
             Self::All => Ok(Box::new(AllQuery)),
             Self::Boolean {
@@ -400,9 +414,16 @@ impl SearchQueryInput {
                 Ok(Box::new(query))
             }
             Self::Parse { query_string } => {
-                Ok(Box::new(parser.parse_query(&query_string).map_err(
-                    |err| QueryError::ParseError(err, query_string),
-                )?))
+                let query = parser
+                    .parse_query(&query_string)
+                    .map_err(|err| QueryError::ParseError(err, query_string))?;
+                {
+                    use std::fs::File;
+                    use std::io::prelude::*;
+                    let mut file = File::create("/tmp/query.txt")?;
+                    writeln!(file, "{query:#?}")?;
+                }
+                Ok(Box::new(query))
             }
             Self::Phrase {
                 field,
@@ -458,15 +479,22 @@ impl SearchQueryInput {
                     &upper_bound,
                 )))
             }
-            Self::Regex { field, pattern } => Ok(Box::new(
-                RegexQuery::from_pattern(
+            Self::Regex { field, pattern } => {
+                let query = RegexQuery::from_pattern(
                     &pattern,
                     field_lookup
                         .as_str(&field)
                         .ok_or_else(|| QueryError::WrongFieldType(field.clone()))?,
                 )
-                .map_err(|err| QueryError::RegexError(err, pattern.clone()))?,
-            )),
+                .map_err(|err| QueryError::RegexError(err, pattern.clone()))?;
+                {
+                    use std::fs::File;
+                    use std::io::prelude::*;
+                    let mut file = File::create("/tmp/query.txt")?;
+                    write!(file, "{query:#?}")?;
+                }
+                Ok(Box::new(query))
+            }
             Self::Term { field, value } => {
                 let record_option = IndexRecordOption::WithFreqsAndPositions;
                 if let Some(field) = field {

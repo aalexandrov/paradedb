@@ -1,0 +1,5 @@
+{ "id": 1, "data": { "enriched": { "email": "coralee.anderson@harris.example" } } }
+{ "id": 2, "data": { "enriched": { "email": "jane.doe@example.com" } } }
+{ "id": 3, "data": { "enriched": { "email": "jason.doe@example.com" } } }
+{ "id": 4, "data": { "enriched": { "email": "jillian.doe@example.com" } } }
+{ "id": 5, "data": { "enriched": { "email": "jake.doe@example.com" } } }
